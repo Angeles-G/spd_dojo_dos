@@ -1,0 +1,218 @@
+// C++ code
+#define CONSTITUCION 13
+#define SANJUAN 12
+#define INDEPENDENCIA 11
+#define MORENO 10
+#define BOTON 9
+#define BUZZER A0 
+
+#define CELESTE 7
+#define AZUL 6
+#define VIOLETA 5
+#define ROSADO 4
+#define ROJO A4
+#define NARANJA A3
+#define AMARILLO A2
+
+/*Consigna SUBTE:
+La empresa “UTN FRA Robotics” ganó la licitación de un proyecto, y deberá
+Implementar un sistema que permita al usuario saber a qué estación de subte está
+llegando, aparte el sistema muestra las estaciones que faltan hasta llegar a destino,
+para ello debemos utilizar 4 LEDs y el display de 7 segmentos. Esta vez el buzzer
+deberá emitir un sonido diferente cada vez que se llegue a una estación.
+El sistema deberá arrancar apagado, luego de presionar el botón empezará y hará lo
+pedido.
+*/
+//variables
+int contador;
+int flag;
+int estado;
+
+const int tonos[] = {261, 277, 294, 330};
+const int countTonos = 4;
+
+void setup()
+{
+  Serial.begin(9600);
+  //leds
+  pinMode(CONSTITUCION, OUTPUT);
+  pinMode(SANJUAN, OUTPUT);
+  pinMode(INDEPENDENCIA, OUTPUT);
+  pinMode(MORENO, OUTPUT);
+  //boton
+  pinMode(BOTON, INPUT_PULLUP);
+  //7 segmentos
+  pinMode(CELESTE, OUTPUT);
+  pinMode(AZUL, OUTPUT);
+  pinMode(VIOLETA, OUTPUT);
+  pinMode(ROSADO, OUTPUT);
+  pinMode(NARANJA, OUTPUT);
+  pinMode(AMARILLO, OUTPUT);
+  pinMode(ROJO, OUTPUT);
+  //variables
+  contador = 0;
+  flag = 0;
+}
+
+void loop()
+{
+  //estado del boton
+  estado = digitalRead(BOTON);
+  //funciones
+  idaYVuelta();
+  estaciones();
+  apagarVuelta();
+}
+
+//enciende la luz de la estacion que ha llegado.
+void encender(int led1)
+{
+  digitalWrite(led1, HIGH);
+}
+
+//apaga la luz de la estacion que ha llegado.
+void apagar(int led1)
+{
+  digitalWrite(led1, LOW);
+}
+
+//funcion que define por una bandera la ida y la vuelta de las estaciones del subte.
+// flag = 0 -> Ida (de MORENO hasta CONSTITUCION).
+// flag = 1 -> Vuelta (de CONSTITUCION hasta MORENO).
+void idaYVuelta()
+{
+  if(estado == 0 && flag == 0){
+    contador++;
+    Serial.println(contador);
+  }else{
+    if(estado == 0 && flag == 1){
+      contador--;
+      Serial.println(contador);
+    }
+  }
+}
+
+//funcion que permite dar el funcionamiento al 7 segmentos, mostrando los numeros del 1 al 4 segun la estacion en la que esta.
+void sieteSegmentos()
+{
+  switch(contador){
+    case 1:
+    	Serial.println("Estas en la estacion: MORENO");
+    	buzzer(contador);
+    	digitalWrite(VIOLETA, LOW);
+    	digitalWrite(ROJO, LOW);
+    	digitalWrite(NARANJA,LOW);
+    	digitalWrite(CELESTE, LOW);
+    	delay(100);
+    	digitalWrite(AMARILLO, HIGH);
+    	digitalWrite(ROSADO, HIGH);
+  		delay(100);
+    	flag = 0; //al terminar la vuelta, vuelve a ser 0 para volver a realizar la ida. 
+    	break;
+    
+    case 2:
+    	Serial.println("Estas en la estacion: INDEPENDENCIA");
+    	buzzer(contador);
+    	digitalWrite(AMARILLO, LOW);
+    	digitalWrite(ROSADO, LOW);
+        delay(100);
+    	digitalWrite(VIOLETA, HIGH);
+    	digitalWrite(ROSADO, HIGH);
+    	digitalWrite(CELESTE, HIGH);
+    	digitalWrite(ROJO, HIGH);
+    	digitalWrite(NARANJA,HIGH);
+    	delay(100);
+    	break;
+    
+    case 3:
+    	Serial.println("Estas en la estacion: SAN JUAN");
+    	buzzer(contador);
+    	digitalWrite(AZUL, LOW);
+    	digitalWrite(VIOLETA, LOW);
+    	digitalWrite(ROSADO, LOW);
+    	digitalWrite(CELESTE, LOW);
+    	digitalWrite(ROJO, LOW);
+    	digitalWrite(AMARILLO,LOW);
+    	delay(100);
+    	digitalWrite(VIOLETA, HIGH);
+    	digitalWrite(ROSADO, HIGH);
+    	digitalWrite(CELESTE, HIGH);
+    	digitalWrite(NARANJA, HIGH);
+    	digitalWrite(AMARILLO, HIGH);
+    	delay(100);
+    	break;
+    
+    case 4:
+    	Serial.println("Estas en la estacion: CONSTITUCION");
+    	buzzer(contador);
+    	digitalWrite(VIOLETA, LOW);
+    	digitalWrite(ROSADO, LOW);
+    	digitalWrite(CELESTE, LOW);
+    	digitalWrite(NARANJA, LOW);
+    	digitalWrite(NARANJA, LOW);
+    	delay(100);
+    	digitalWrite(AZUL, HIGH);
+    	digitalWrite(CELESTE, HIGH);
+    	digitalWrite(ROSADO, HIGH);
+    	digitalWrite(AMARILLO, HIGH);
+    	delay(100);
+    	flag = 1; 
+    //al terminar la ida, se vuelve 1 para realizar la vuelta.
+    	break;
+  }
+}
+
+//funcion que muestra tanto en los 7 segmentos y en las luces led de cada estacion, la estacion en la que se encuentra.
+void estaciones()
+{
+  if(estado == 0 && contador == 1){
+    encender(MORENO);
+    apagar(INDEPENDENCIA);
+    sieteSegmentos();
+  }else{
+    if(estado == 0 && contador == 2){
+      apagar(MORENO);
+      encender(INDEPENDENCIA);
+      sieteSegmentos();
+    }else{
+      if(estado == 0 && contador == 3){
+        apagar(INDEPENDENCIA);
+      	encender(SANJUAN);
+      	sieteSegmentos();
+      }else{
+        if(estado == 0 && contador == 4){
+          apagar(SANJUAN);
+          encender(CONSTITUCION);
+          sieteSegmentos();
+        }
+      }
+    }
+  }
+}
+
+//funcion que apaga las luces led de la estacion anterior al realizar la vuelta.
+void apagarVuelta()
+{
+  if(flag == 1){
+    if(contador == 3){
+      apagar(CONSTITUCION);
+    }else{
+      if(contador == 2){
+        apagar(SANJUAN);
+      }else{
+        if(contador == 1){
+          apagar(INDEPENDENCIA);
+        }
+      }
+    }
+  }
+}
+
+
+void buzzer(int contador)
+{
+  tone(A0, tonos[contador]);
+  delay(1000);
+  noTone(A0);
+  digitalWrite(A0, LOW);
+}
